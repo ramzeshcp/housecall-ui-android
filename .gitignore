@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+!**/src/**/build/
+.kotlin/
+
+# Local
+local.properties
+
+# Wasm/JS build artifacts
+node_modules/
+kotlin-js-store/
+yarn.lock.bak
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# macOS
+.DS_Store
+
+# Java/Kotlin
+*.class
+hs_err_pid*
+replay_pid*
