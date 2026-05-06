@@ -28,7 +28,9 @@ import androidx.compose.ui.window.ComposeViewport
 import com.housecall.designsystem.color.HcColors
 import com.housecall.designsystem.textinput.HcTextField
 import com.housecall.designsystem.typography.HcTypography
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlinx.browser.document
+import kotlinx.browser.window
 
 /**
  * Web preview of the externalized DS rendered at **Pixel 9 dimensions** (412 x 915 dp logical).
@@ -42,6 +44,10 @@ import kotlinx.browser.document
  */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    val params = parseQueryParams(window.location.search)
+    val screen = params["screen"]
+    val layoutParam = params["layout"]
+
     ComposeViewport(document.body!!) {
         MaterialTheme(
             colors = lightColors(
@@ -55,9 +61,69 @@ fun main() {
             ),
         ) {
             Pixel9Frame {
-                HcTextFieldsShowcaseScreen()
+                when (screen) {
+                    "builder" -> BuilderRoute(layoutParam)
+                    "text-fields" -> HcTextFieldsShowcaseScreen()
+                    "default", null, "" -> HcTextFieldsShowcaseScreen()
+                    else -> ErrorScreen("Unknown screen: '$screen'")
+                }
             }
         }
+    }
+}
+
+/**
+ * Parses `?key=value&key2=value2` into a map. Strips leading `?`. Decodes %xx escapes.
+ */
+private fun parseQueryParams(search: String): Map<String, String> {
+    if (search.isEmpty()) return emptyMap()
+    val raw = search.removePrefix("?")
+    if (raw.isEmpty()) return emptyMap()
+    return raw.split("&").mapNotNull { entry ->
+        val idx = entry.indexOf('=')
+        if (idx < 0) return@mapNotNull null
+        val k = decodeURIComponentSafe(entry.substring(0, idx))
+        val v = decodeURIComponentSafe(entry.substring(idx + 1))
+        k to v
+    }.toMap()
+}
+
+private fun decodeURIComponentSafe(s: String): String =
+    runCatching { jsDecodeURIComponent(s) }.getOrDefault(s)
+
+@OptIn(ExperimentalWasmJsInterop::class)
+@JsFun("(s) => decodeURIComponent(s)")
+private external fun jsDecodeURIComponent(s: String): String
+
+@Composable
+private fun BuilderRoute(layoutJson: String?) {
+    if (layoutJson.isNullOrBlank()) {
+        ErrorScreen("Missing ?layout= param. Pass URL-encoded JSON.")
+        return
+    }
+    val parseResult = parseLayout(layoutJson)
+    val node = parseResult.getOrElse {
+        ErrorScreen("Layout JSON parse error: ${it.message}")
+        return
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        RenderNode(node)
+    }
+}
+
+@Composable
+private fun ErrorScreen(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = message,
+            style = HcTypography.BodyDefault,
+            color = HcColors.Error.Main,
+        )
     }
 }
 

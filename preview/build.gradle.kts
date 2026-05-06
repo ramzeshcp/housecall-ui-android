@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -37,6 +38,7 @@ kotlin {
                 implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
                 implementation(compose.components.resources)
+                implementation(libs.kotlinx.serialization.json)
 
                 // Consume the DS lib's wasmJs `.klib` variant. Same artifact whose
                 // Android `.aar` variant the Android app's `:internal:dev-tools`
