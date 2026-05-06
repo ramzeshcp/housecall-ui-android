@@ -1,0 +1,6 @@
+{
+  "name": "ds-eng-android",
+  "description": "Housecall UI Android engineering guidance — Compose Wasm preview iframe pattern for prototypes",
+  "version": "0.1.0",
+  "skills": "./skills/"
+}
