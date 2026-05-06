@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -117,9 +118,10 @@ fun RenderNode(node: LayoutNode, modifier: Modifier = Modifier) {
 
 @Composable
 private fun RenderColumn(node: LayoutNode, modifier: Modifier) {
-    val arrangement = when (node.spacing) {
-        null -> resolveMainArrangementVertical(node.mainAxis)
-        else -> Arrangement.spacedBy(node.spacing.dp)
+    val arrangement = if (node.spacing != null) {
+        Arrangement.spacedBy(node.spacing.dp, resolveCrossAlignmentVertical(node.mainAxis))
+    } else {
+        resolveMainArrangementVertical(node.mainAxis)
     }
     Column(
         modifier = modifier.applyLayoutProps(node).maybeVerticalScroll(node.scroll == true),
@@ -132,9 +134,10 @@ private fun RenderColumn(node: LayoutNode, modifier: Modifier) {
 
 @Composable
 private fun RenderRow(node: LayoutNode, modifier: Modifier) {
-    val arrangement = when (node.spacing) {
-        null -> resolveMainArrangementHorizontal(node.mainAxis)
-        else -> Arrangement.spacedBy(node.spacing.dp)
+    val arrangement = if (node.spacing != null) {
+        Arrangement.spacedBy(node.spacing.dp, resolveCrossAlignmentHorizontal(node.mainAxis))
+    } else {
+        resolveMainArrangementHorizontal(node.mainAxis)
     }
     Row(
         modifier = modifier.applyLayoutProps(node),
@@ -213,8 +216,11 @@ private fun RenderUnknown(node: LayoutNode, modifier: Modifier) {
 
 private fun Modifier.applyLayoutProps(node: LayoutNode): Modifier {
     var m = this
-    if (node.fillWidth == true) m = m.fillMaxWidth()
-    if (node.fillHeight == true) m = m.fillMaxSize()
+    when {
+        node.fillWidth == true && node.fillHeight == true -> m = m.fillMaxSize()
+        node.fillWidth == true -> m = m.fillMaxWidth()
+        node.fillHeight == true -> m = m.fillMaxHeight()
+    }
     when {
         node.padding != null -> m = m.padding(node.padding.dp)
         node.paddingHorizontal != null || node.paddingVertical != null -> {
