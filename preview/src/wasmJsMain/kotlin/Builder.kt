@@ -148,7 +148,10 @@ private fun RenderRow(node: LayoutNode, modifier: Modifier) {
         horizontalArrangement = arrangement,
         verticalAlignment = resolveCrossAlignmentVertical(node.crossAxis),
     ) {
-        node.children.orEmpty().forEach { child -> RenderNode(child) }
+        // Distribute available width equally to direct children so paired
+        // text fields render side-by-side instead of the first one consuming
+        // all the width via fillMaxWidth().
+        node.children.orEmpty().forEach { child -> RenderNode(child, Modifier.weight(1f)) }
     }
 }
 
