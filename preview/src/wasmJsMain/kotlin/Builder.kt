@@ -92,6 +92,10 @@ data class LayoutNode(
     val isCharLimited: Boolean? = null,
     val charLimit: Int? = null,
     val singleLine: Boolean? = null,
+    /** Icon name from the IconRegistry (e.g. "search", "close", "person"). */
+    val leadingIcon: String? = null,
+    /** Icon name from the IconRegistry (e.g. "search", "close", "person"). */
+    val trailingIcon: String? = null,
 )
 
 private val builderJson = Json {
@@ -180,6 +184,12 @@ private fun RenderHcTextField(node: LayoutNode, modifier: Modifier) {
     var v by remember(node.label, node.placeholder, node.value) {
         mutableStateOf(node.value.orEmpty())
     }
+    val leading: (@Composable () -> Unit)? = node.leadingIcon?.let { name ->
+        { ResolveIcon(name) }
+    }
+    val trailing: (@Composable () -> Unit)? = node.trailingIcon?.let { name ->
+        { ResolveIcon(name) }
+    }
     HcTextField(
         modifier = modifier.fillMaxWidth(),
         value = v,
@@ -190,6 +200,8 @@ private fun RenderHcTextField(node: LayoutNode, modifier: Modifier) {
         isError = node.isError == true,
         enabled = node.enabled != false,
         outlined = node.outlined == true,
+        leadingIcon = leading,
+        trailingIcon = trailing,
         trailingText = node.trailingText,
         passwordToggleEnabled = node.passwordToggleEnabled == true,
         isCharLimited = node.isCharLimited == true,
