@@ -60,11 +60,13 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Serialize publication tasks (--max-workers=1). When Gradle runs them
-        # in parallel, the kotlinMultiplatform publication and the per-target
-        # publications race on the same .pom URL and one fails with HTTP 409.
-        # GitHub Packages versions are immutable, so even partial publishes
-        # block subsequent retries on the same version. Serial publish avoids it.
+        # Publishes three artifacts under com.housecall:
+        #   * housecall-ui-android          → kotlinMultiplatform metadata (.module + thin POM)
+        #   * housecall-ui-android-android  → Android .aar variant
+        #   * housecall-ui-android-wasmjs   → Wasm .klib variant
+        # The artifactId override that previously caused HTTP 409 on the root
+        # POM was removed in build.gradle.kts; per-target artifactIds prevent
+        # the URL collision that broke 0.1.0 / 0.1.1 / 0.1.2.
         run: |
           ./gradlew :housecall-ui-android:publishAllPublicationsToGitHubPackagesRepository \
-            --no-daemon --max-workers=1 --stacktrace
+            --no-daemon --stacktrace

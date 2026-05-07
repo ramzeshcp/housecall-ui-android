@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.housecall"
-version = "0.1.2"
+version = "0.1.3"
 
 kotlin {
     androidTarget {
@@ -49,15 +49,17 @@ android {
     }
 }
 
-afterEvaluate {
-    publishing {
-        publications.withType<MavenPublication> {
-            groupId = "com.housecall"
-            artifactId = "housecall-ui-android"
-            version = project.version.toString()
-        }
-    }
-}
+// NOTE: previous versions of this file forced `artifactId = "housecall-ui-android"`
+// on every publication via afterEvaluate. That collapsed `kotlinMultiplatform`,
+// `androidRelease`, and `wasmJs` to the same Maven coordinates and caused HTTP 409
+// when publishing to GitHub Packages (every publication tried to PUT the same
+// root POM URL). Removed in 0.1.3 — KMP's default per-target artifactIds are now
+// used, which gives:
+//   * housecall-ui-android          → kotlinMultiplatform metadata (.module + thin POM)
+//   * housecall-ui-android-android  → Android .aar variant
+//   * housecall-ui-android-wasmjs   → Wasm .klib variant
+// Consumers continue to use `com.housecall:housecall-ui-android:<v>` — Gradle
+// Module Metadata picks the correct variant transparently.
 
 publishing {
     repositories {
