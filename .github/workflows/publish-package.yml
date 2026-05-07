@@ -1,0 +1,65 @@
+name: Publish to GitHub Packages
+
+on:
+  # Triggered manually from the Actions tab.
+  workflow_dispatch: {}
+
+  # Triggered automatically when a version tag is pushed (e.g. `git tag v0.1.0 && git push --tags`).
+  # Tag format `v*` (`v0.1.0`, `v0.2.0`, …) — the leading `v` is conventional and ignored
+  # at publish time; the version published is whatever is set in `housecall-ui-android/build.gradle.kts`.
+  push:
+    tags:
+      - 'v*'
+
+# Cancel any in-progress run when a newer tag/commit lands on the same ref.
+concurrency:
+  group: publish-package-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # The `:housecall-ui-android` module applies `com.android.library` so the
+      # Android SDK must be present at Gradle configuration time, even though
+      # we're building the lib (not the preview) in this job.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.konan
+          key: ${{ runner.os }}-gradle-publish-${{ hashFiles('gradle/libs.versions.toml', '**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-publish-
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Publish KMP library to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :housecall-ui-android:publishAllPublicationsToGitHubPackagesRepository \
+            --no-daemon --stacktrace

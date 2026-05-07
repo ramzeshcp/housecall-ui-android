@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.housecall"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 kotlin {
     androidTarget {
@@ -54,7 +54,27 @@ afterEvaluate {
         publications.withType<MavenPublication> {
             groupId = "com.housecall"
             artifactId = "housecall-ui-android"
-            version = "0.1.0-SNAPSHOT"
+            version = project.version.toString()
+        }
+    }
+}
+
+publishing {
+    repositories {
+        // GitHub Packages — public read with PAT (read:packages scope).
+        // Credentials resolved in this priority order:
+        //   1. Gradle properties: gpr.user / gpr.token (recommended for local devs;
+        //      put them in ~/.gradle/gradle.properties so they don't leak into VCS)
+        //   2. Env vars: GITHUB_ACTOR / GITHUB_TOKEN (used by GitHub Actions)
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ramzeshcp/housecall-ui-android")
+            credentials {
+                username = (project.findProperty("gpr.user") as String?)
+                    ?: System.getenv("GITHUB_ACTOR")
+                password = (project.findProperty("gpr.token") as String?)
+                    ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }
